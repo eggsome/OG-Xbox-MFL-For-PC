@@ -11,6 +11,9 @@
 /*0064d888*/ extern char *g_app_64d888;
 /*007d2128*/ extern struct RwGlobalsRelease *RwEngineInstance;
 /*007e7740*/ extern struct ControllerCfg g_controller_cfg[4];
+/*0042c440*/ extern int __cdecl ui_rt2d_text_draw(int text_id, float x, float y, unsigned int colour, float scale, int flags);
+#define TEXT_PAD_PICTURE 0x37           /* the one-character texts of the menu font's controller pictures: white */
+#define TEXT_PAD_PICTURE_BLACK 0xc7     /* and black */
 /* ui_keyboard_icon_find */
 /* compile: /GS */
 /* WARNING: Function: __security_check_cookie replaced with injection: security_check_cookie */
@@ -29,6 +32,11 @@ void __cdecl ui_keyboard_icon_find(int controller,float icon_x,float icon_y,unde
     char name[16];
   } frame;
   
+  /* a gamepad as the Xbox version draws it: the font's controller picture, as a text */
+  if (g_controller_cfg[controller].device == 1) {
+    ui_rt2d_text_draw(add_suffix != 0 ? TEXT_PAD_PICTURE_BLACK : TEXT_PAD_PICTURE, icon_x, icon_y, colour_rgba, 0.9f, 2);
+    return;
+  }
   frame.name[4] = '\0';
   frame.name[5] = '\0';
   frame.name[6] = '\0';

@@ -1,6 +1,13 @@
 // cluster-entries: ui_rt2d_text_map_special_chars
 /* Installed cluster ui_rt2d_text_map_special_chars (tools/cluster_install.py from output/cluster_pilot11/ui_rt2d_text_map_special_chars.c); entries are patched at their original addresses by build_overlay.py --clusters. */
 #include "mfl_tier2.h"
+
+/* the Xbox font's character of each control code of a text: 8 = A, 9 = B, 0xa = START, 0xb = Y, 0xc = X (as the Xbox version maps them) */
+#define GLYPH_CODE_8 0x80
+#define GLYPH_CODE_9 0x83
+#define GLYPH_CODE_A 0x84
+#define GLYPH_CODE_B 0x81
+#define GLYPH_CODE_C 0x82
 /* ui_rt2d_text_map_special_chars */
 
 /* "maps the special control codes 8..0xB of a counted wide string to font glyph codes" */
@@ -20,19 +27,19 @@ void ui_rt2d_text_map_special_chars_n(ushort *text, short *out)
     do {
       ch = *(short *)((int)text + (2 - (int)out) + (int)out_cursor);
       if (ch == 8) {
-        ch = 0x81;
+        ch = GLYPH_CODE_8;
       }
       else if (ch == 9) {
-        ch = 0x7f;
+        ch = GLYPH_CODE_9;
       }
       else if (ch == 10) {
-        ch = 0x81;
+        ch = GLYPH_CODE_A;
       }
       else if (ch == 0xb) {
-        ch = 0x8d;
+        ch = GLYPH_CODE_B;
       }
       else if (ch == 0xc) {
-        ch = 0x80;
+        ch = GLYPH_CODE_C;
       }
       else if (ch == 0xd) {
         ch = 0x87;

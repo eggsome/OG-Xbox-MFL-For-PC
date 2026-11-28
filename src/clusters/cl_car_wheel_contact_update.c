@@ -1,6 +1,8 @@
 // cluster-entries: car_wheel_contact_update
 /* Installed cluster car_wheel_contact_update (tools/cluster_install.py from output/cluster_pilot_uc3/car_wheel_contact_update.c); entries are patched at their original addresses by build_overlay.py --clusters. */
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
+/*004b2a60*/ extern int sprintf();
 typedef struct RpWorld RpWorld;
 /*0047acc0*/ extern void car_wheels_vs_triangles(Car *car, void *triangles);
 /*004b3284*/ extern double crt_acos_body(double x);
@@ -278,6 +280,21 @@ void car_wheel_contact_update_n(void *world, Car *car, int limit_angle)
   cross.y = normal.x * car->up[2] - normal.z * car->up[0];
   cross.z = normal.y * car->up[0] - normal.x * car->up[1];
   cosine = normal.z * car->up[2] + normal.y * car->up[1] + normal.x * car->up[0];
+  if (mfl_debug_log_on()) {      /* the alignment decision, in the form read out of the Xbox version at 0x14d217 */
+    static int lines;
+    char line[320];
+
+    if (lines < 40000) {
+      lines++;
+      sprintf(line, "align car=%d limit=%d before=%d n=%.6f,%.6f,%.6f up=%.6f,%.6f,%.6f cos=%.8f pos=%.4f,%.4f,%.4f wd=%.5f,%.5f,%.5f,%.5f wc=%d%d%d%d av=%.5f,%.5f,%.5f",
+              (int)car->index, limit_angle, wheels_before, normal.x, normal.y, normal.z, car->up[0], car->up[1], car->up[2], (double)cosine,
+              matrix->pos.x, matrix->pos.y, matrix->pos.z,
+              car->wheels[0].contact_distance, car->wheels[1].contact_distance, car->wheels[2].contact_distance, car->wheels[3].contact_distance,
+              car->wheels[0].in_contact, car->wheels[1].in_contact, car->wheels[2].in_contact, car->wheels[3].in_contact,
+              car->angular_velocity[0], car->angular_velocity[1], car->angular_velocity[2]);
+      mfl_debug_log_text(line);
+    }
+  }
   if ((cross.x != 0.0f || cross.y != 0.0f || cross.z != 0.0f) && (cosine < ALIGN_COSINE || wheels_before < 3)) {
     cosine_clamped = -1.0;
     if (!(cosine < -1.0)) {
@@ -290,6 +307,7 @@ void car_wheel_contact_update_n(void *world, Car *car, int limit_angle)
     if (limit_angle != 0 && 2.5f < angle) {
       angle = 2.5f;
     }
+    if (mfl_debug_log_on()) { char line[64]; sprintf(line, "align car=%d turned by %.5f", (int)car->index, angle); mfl_debug_log_text(line); }
     saved_pos.x = matrix->pos.x;
     saved_pos.y = matrix->pos.y;
     saved_pos.z = matrix->pos.z;

@@ -144,6 +144,11 @@ struct mfl_pad_raw {      /* one pad's stick and D-pad of this frame, in XInput'
 extern struct mfl_pad_raw mfl_pad_raw[4];      /* cl_joypad_device_setup.c */
 
 
+/* the session log of --debug (mfl_debug_log.c) */
+int mfl_debug_log_on(void);                      /* 1 when the game was started with --debug */
+void mfl_debug_log_frame(void);                  /* app_frame_wait: this frame's lines */
+void mfl_debug_log_text(const char *text);       /* an event line */
+
 struct PlayerInput;
 void mfl_rumble_poll(struct PlayerInput *now, const struct PlayerInput *previous, int gamepad, unsigned int joystick);      /* controller_poll_player, after its clear */
 

@@ -67,6 +67,7 @@ undefined4 app_frame_wait(void)
 {
   uint step_count;
 
+  mfl_debug_log_frame();      /* --debug: this frame's log lines */
   app_frame_timing();
 #if MFL_FIX_FIXED_STEP
   step_count = fixed_step_count();

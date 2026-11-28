@@ -15,6 +15,7 @@
 #include "mfl_tier2.h"
 #include "mfl_fix.h"
 
+/*004b2a60*/ extern int sprintf();
 /* only names the original exe imports have import libraries: LoadLibraryA comes through GetProcAddress, as in mfl_resources.c */
 extern __declspec(dllimport) void *__stdcall GetModuleHandleA(const char *name);
 extern __declspec(dllimport) void *__stdcall GetProcAddress(void *module, const char *name);
@@ -41,13 +42,18 @@ static void motors(unsigned int pad, unsigned int left, unsigned int right)
       void *dll = load_library(k_dll[k]);
 
       if (dll != 0) set_state = (set_state_fn)GetProcAddress(dll, "XInputSetState");
+      if (mfl_debug_log_on()) { char line[96]; sprintf(line, "rumble: %s %s, XInputSetState %s", k_dll[k], dll != 0 ? "loaded" : "not found", set_state != 0 ? "found" : "missing"); mfl_debug_log_text(line); }
     }
   }
   v.left = (unsigned short)(left << 8);
   v.right = (unsigned short)(right << 8);
   if (set_state == 0 || (v.left == sent[pad].left && v.right == sent[pad].right)) return;      /* only changes are sent */
   sent[pad] = v;
-  set_state(pad, &v);
+  {
+    unsigned long r = set_state(pad, &v);
+
+    if (mfl_debug_log_on()) { char line[96]; sprintf(line, "rumble: pad %u left=%u right=%u -> XInputSetState returns %lu", pad, left, right, r); mfl_debug_log_text(line); }
+  }
 }
 
 void mfl_rumble_poll(struct PlayerInput *now, const struct PlayerInput *previous, int gamepad, unsigned int joystick)

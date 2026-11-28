@@ -1,7 +1,9 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*0040fdc0*/ extern int race_get_phase();
 /*0040ff20*/ extern int race_setup_get_slot_type();
 /*007f01fc*/ extern struct PlayerSlot g_player_slots[4];
+/*004b2a60*/ extern int sprintf();
 /*007ef840*/ extern char g_player_inputs_0__field23_0x20;
 /* race phase in which rumble is sent (inferred: only phase that passes the gate) */
 #define RUMBLE_RACE_PHASE (6)
@@ -21,6 +23,15 @@ void player_rumble(int slot,uint motor,uint duration,uint strength)
   int scratch;
   char *rec;
 
+  if (mfl_debug_log_on()) {
+    char line[160];
+    int controller = slot >= 0 && slot < 4 ? g_player_slots[slot].controller : -1;
+
+    sprintf(line, "player_rumble slot=%d pattern=%d frames=%d strength=%d slot_type=%d phase=%d controller=%d enabled=%d", slot, (int)motor, (int)duration, (int)strength,
+            race_setup_get_slot_type(slot), race_get_phase(), controller,
+            controller >= 0 && controller < 12 ? *(int *)(&g_player_inputs_0__field23_0x20 + controller * 0x4c + 4) : -1);
+    mfl_debug_log_text(line);
+  }
   /* slot type must be 1 (meaning of type 1 not in dossier) */
   scratch = race_setup_get_slot_type(slot);
   if (scratch == 1) {

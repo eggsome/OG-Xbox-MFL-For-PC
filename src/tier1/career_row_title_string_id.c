@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*006091a4*/ extern undefined g_career_row_6091a4;
 /*006091b8*/ extern undefined g_career_row_6091b8;
 /*006091cc*/ extern undefined g_career_row_6091cc;
@@ -13,6 +14,12 @@
 
 int __cdecl career_row_title_string_id(int row)
 {
+  if ((row < 0 || row == (int)g_career_row) && mfl_custom_track_selected()) {      /* the title of the selected event: Crazy Town (the list asks for its host row by MFL_CUSTOM_TRACK_HOST_TITLE) */
+    return MFL_CUSTOM_TRACK_TEXT;
+  }
+  if (row == MFL_CUSTOM_TRACK_HOST_TITLE) {
+    row = g_career_row;
+  }
   if (row < 0) {
     row = g_career_row;
   }

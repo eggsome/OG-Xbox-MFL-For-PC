@@ -196,6 +196,7 @@ int app_boot_init(void)
   load_copters_txd();
   cup_scene_load_models();
   game_close_piz();
+  mfl_custom_track_outline_load();      /* one more outline model, from the Crazy Town archive */
   g_app_64d888 = FUN_004c3d80("toastart\\pc\\pc.txd", 0, 0);
   menu_set_69cfc4(MENU_CLEAR_ALPHA);
   attract_timer_init();

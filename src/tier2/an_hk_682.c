@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 extern RwChar *PTR_s_Training1_00607d00[];
 extern RwChar *PTR_s_Egypt1_00608390[];
 extern RwChar *PTR_s_Neustein1_006083b8[];
@@ -28,6 +29,9 @@ RwTexture *menu_texture_dict_load(int item_index)
   int event_column;
   int texture_index;
   
+  if (mfl_custom_track_picture(item_index) != 0) {      /* Crazy Town is selected: its own two pictures */
+    return (RwTexture *)mfl_custom_track_picture(item_index);
+  }
   event_column = (int)(g_menu_event_column);
   /* Columns 3, 4, 5: textures come from PTR_s_Training1_00607d00. Column 5 uses TEXTURE_SET_B_OFFSET, column 4 TEXTURE_SET_A_OFFSET, column 3 no offset. */
   if (((g_menu_event_column == 3) || (g_menu_event_column == 4)) || (g_menu_event_column == 5)) {

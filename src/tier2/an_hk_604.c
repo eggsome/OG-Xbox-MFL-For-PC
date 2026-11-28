@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*004016c0*/ extern int cup_scene_place_object();
 /*004019a0*/ extern int cup_scene_update_object();
 /*00401d90*/ extern int cup_scene_render();
@@ -164,6 +165,7 @@ scene_progress_scaled:
   if (g_game_state.option_flags[1] != 0) {
     g_game_state.mirror_mode = 1;
   }
+  mfl_custom_track_no_mirror();
   race_phase = race_get_phase();
   if (race_phase != 7) goto present_mirror_frame;
   race_phase = race_get_last_active_player();

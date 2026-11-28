@@ -47,6 +47,7 @@ void mfl_widescreen_2d_full(int on);      /* an_hk_611.c: 1 = a page background 
 #if MFL_FIX_UNLOCK_ALL || MFL_FIX_PREFS      /* with MFL_FIX_PREFS alone the helpers act only when the cfg key unlock_all is 1 */
 void mfl_unlock_all_force(void);
 void mfl_unlock_all_unforce(void *save_block);
+int mfl_unlock_all_forced(void);      /* 1 while the live progress words are the forced ones (the save gets the kept real ones) */
 #endif
 
 #ifndef MFL_FIX_PREFS      /* player preferences read at start from mflng_settings.cfg beside the exe (key=value lines, no command line); every key's
@@ -151,6 +152,34 @@ void mfl_debug_log_text(const char *text);       /* an event line */
 
 struct PlayerInput;
 void mfl_rumble_poll(struct PlayerInput *now, const struct PlayerInput *previous, int gamepad, unsigned int joystick);      /* controller_poll_player, after its clear */
+
+/* the track "Crazy Town" (mfl_custom_track.c) */
+#define MFL_CUSTOM_TRACK_BASE 23           /* KEYS */
+#define MFL_CUSTOM_TRACK_TEXT 0x2000       /* dat_get_string id of the track's name */
+#define MFL_CUSTOM_TRACK_HOST_TITLE 0x4000 /* career_row_title_string_id: the host row's own title while the track is selected */
+int mfl_custom_track_listed(void);         /* 1 on the event types whose list has the row (6..8 multiplayer, 0xb..0xd quick battle) */
+int mfl_custom_track_selected(void);       /* 1 while the cursor is on the row (g_career_row = the host row) */
+void mfl_custom_track_select(int on);      /* the list's cursor enters / leaves the row */
+void mfl_custom_track_no_mirror(void);    /* where the game switches mirror mode on: off again while the track is selected */
+void mfl_custom_track_sync(void);          /* every menu frame and before a course load: the race setup's records of the host row name the
+                                              base course while the row is selected, and are the game's own again when it is not */
+struct CourseEntry;
+struct CourseEntry *mfl_custom_track_entry(unsigned int course_id);      /* the track's course record when it is selected and course_id is the base, else 0 */
+void mfl_custom_track_hold(int on);       /* 1: mfl_custom_track_entry answers 0 (sound_load_course_audio: the base course's own sound bank) */
+#define MFL_CUSTOM_TRACK_ARCHIVE "toastart/tracks/CrazyTwn.piz"
+#define MFL_CUSTOM_TRACK_ROUTES "ROUTES.AI"      /* the bots' routes, in the track's archive (the game's own courses: AI<id>.AI of common/ai.piz) */
+const unsigned short *mfl_custom_track_text(int id);      /* dat_get_string for MFL_CUSTOM_TRACK_TEXT: length-prefixed UTF-16 */
+int mfl_custom_track_archive_present(void);                /* 0: no CrazyTwn.piz, the list has no extra row */
+void mfl_custom_track_pictures_load(void);                 /* race_load_common_assets: PICTURES.TXD of the archive (the event list's two pictures) */
+void mfl_custom_track_pictures_free(void);                 /* effects_init, with the game's own picture dictionaries */
+void *mfl_custom_track_picture(int item);                  /* menu_texture_dict_load: picture 0 / 1 while the track is selected, else 0 */
+extern int mfl_custom_track_outline_entry[];               /* the outline model's cup scene entry (OUTLINE.DFF of the archive) */
+void mfl_custom_track_outline_load(void);                  /* app_boot_init, after cup_scene_load_models */
+int *mfl_custom_track_outline(void);                       /* cup_find_entry: that entry while the track is selected, else 0 */
+void mfl_custom_track_save_gather(void *save_block);      /* gamesave_gather: the host row's own results into the save block, the track's into the section */
+void mfl_custom_track_save_write(const char *path);        /* gamesave_write: the section behind the game's block */
+void mfl_custom_track_save_read(const char *path);         /* gamesave_load: the section, when the file has one */
+void mfl_custom_track_save_apply(void);                    /* gamesave_apply: the loaded results in force */
 
 #ifndef MFL_FIX_ALT_TAB     /* the window counts as active again when it is activated by a click or while minimised (WM_ACTIVATE low word), so after
                                 Alt+Tab / the Windows key back into the game it runs and reads keys again; the original compared the whole wparam with

@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*00408c40*/ extern double fx_current_object_get_float();
 /*0040fdc0*/ extern int race_get_phase();
 /*0041b970*/ extern int hudpanel_reset_all();
@@ -403,6 +404,9 @@ course_table_select(uint course_id,undefined4 unused_2,undefined4 unused_3,undef
       entry = entry + 1;
       entries_left = entries_left + -1;
     } while (entries_left != 0);
+  }
+  if (mfl_custom_track_entry(course_id) != (CourseEntry *)0x0) {      /* Crazy Town: its own record (no course callbacks) under the base course's id */
+    g_current_course_entry = mfl_custom_track_entry(course_id);
   }
   return;
 }

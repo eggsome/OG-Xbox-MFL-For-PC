@@ -58,6 +58,8 @@ void cup_find_entry(int id)
         p += 0x1a;
         n--;
     } while (n != 0);
+    if (mfl_custom_track_outline() != 0)      /* Crazy Town is selected: its own outline model */
+        g_cup_64d880 = mfl_custom_track_outline();
 }
 
 // FUNCTION: MFL 0x00402830
@@ -170,6 +172,11 @@ int gamesave_load(void)
 #else
     stream_read_file(g_gamesave_5dd9b4, g_savegame, 0x42334);
 #endif
+#if MFL_FIX_USER_DIR
+    mfl_custom_track_save_read(mfl_user_path(g_gamesave_5dd9b4, 0));
+#else
+    mfl_custom_track_save_read(g_gamesave_5dd9b4);
+#endif
     gamesave_set_result_code(0);
     return 0;
 }
@@ -181,6 +188,12 @@ int gamesave_write(void)
     stream_write_file((void *)mfl_user_path(g_gamesave_5dd9b4, 1), g_savegame, 0x42334);
 #else
     stream_write_file(g_gamesave_5dd9b4, g_savegame, 0x42334);
+#endif
+    /* Crazy Town's results: a section behind the game's block (mfl_custom_track.c) */
+#if MFL_FIX_USER_DIR
+    mfl_custom_track_save_write(mfl_user_path(g_gamesave_5dd9b4, 1));
+#else
+    mfl_custom_track_save_write(g_gamesave_5dd9b4);
 #endif
     gamesave_set_result_code(0);
     return 0;

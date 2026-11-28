@@ -34,6 +34,7 @@ void gamesave_apply(void)
 #if MFL_FIX_UNLOCK_ALL || MFL_FIX_PREFS
   mfl_unlock_all_force();
 #endif
+  mfl_custom_track_save_apply();      /* the Crazy Town row of the loaded file (mfl_custom_track.c) */
   return;
 }
 
@@ -80,6 +81,11 @@ void mfl_unlock_all_force(void)
   real_bonus_entry = g_game_state.option_flags[0];
   g_game_state.option_flags[0] = 1;
   have_real = 1;
+}
+
+int mfl_unlock_all_forced(void)
+{
+  return have_real;
 }
 
 /* MFL_FIX_UNLOCK_ALL, called by gamesave_gather after its block copy: the save block gets the real words back, so the user's save never holds

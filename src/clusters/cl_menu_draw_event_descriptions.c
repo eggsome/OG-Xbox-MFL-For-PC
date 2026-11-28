@@ -2,6 +2,7 @@
 /* Installed cluster menu_draw_event_descriptions (tools/cluster_install.py from output/cluster_pilot_dtrig/menu_draw_event_descriptions.c); entries are patched at their original addresses by build_overlay.py --clusters. */
 /* compile: /GS */
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 #pragma auto_inline(off)      /* the verified (diffemu, /Ob0) and the shipped (/O2) code must have the same call structure */
 /* DECLS-BEGIN */
 /*007ef7ec*/ extern float g_frame_seconds;
@@ -106,11 +107,15 @@ typedef struct EventRowDraw {
 
 /* One status icon of a row (medal 0..2 = column): the selected row gets a framed icon (pulsing when the cursor is on
    this column) with the progress mark on top, the other rows a plain icon. */
+#define CUSTOM_SELECTED mfl_custom_track_selected()      /* the cursor is on the Crazy Town row, one below g_career_row (mfl_custom_track.c) */
+#define CUSTOM_LISTED mfl_custom_track_listed()
+#define CURSOR_ROW (g_career_row + CUSTOM_SELECTED)      /* the list position of the cursor */
+
 static void draw_row_icon(EventRowDraw *d, int medal, int column)
 {
     int progress_index = column + d->row * 18;
 
-    if (d->row == g_career_row) {
+    if (d->row == g_career_row && !CUSTOM_SELECTED) {
         void *texture = medal_asset_names(medal);
         SpriteBox *box;
         unsigned int progress;
@@ -235,7 +240,9 @@ void menu_draw_event_descriptions(int skip_list)
         if (visible < EVENT_LIST_HEIGHT_COMPACT)
             top = (float)((EVENT_LIST_HEIGHT_COMPACT - visible) * 20 / 2) + EVENT_LIST_TOP;
         list_top = (float)g_menu_69d68c + top;
-        scrolled = g_career_row * EVENT_ROW_HEIGHT + g_menu_69d68c;
+        if (CUSTOM_LISTED)
+            visible++;
+        scrolled = CURSOR_ROW * EVENT_ROW_HEIGHT + g_menu_69d68c;
         if (scrolled > EVENT_LIST_SCROLL_MAX)
             g_menu_69d68c = g_menu_69d68c - 3;
         if (scrolled < 0)
@@ -245,7 +252,7 @@ void menu_draw_event_descriptions(int skip_list)
     if (skip_list == 0) {
         UiColour band;
         float band_top = list_top - 11.0f;
-        float band_y = (float)g_career_row * EVENT_ROW_HEIGHT_F + band_top;
+        float band_y = (float)CURSOR_ROW * EVENT_ROW_HEIGHT_F + band_top;
         int row;
         int pass;
 
@@ -269,9 +276,9 @@ void menu_draw_event_descriptions(int skip_list)
         draw_rect(310.0f, band_y - 20.0f, 2.0f, 22.0f, band.packed);
 
         /* scroll arrows */
-        if (g_career_row != 0)
+        if (CURSOR_ROW != 0)
             gfx_draw_triangle_2d(152.0f, 96.0f, 200.0f, 96.0f, 176.0f, 72.0f, triangle.packed);
-        if (g_career_row < visible - 1)
+        if (CURSOR_ROW < visible - 1)
             gfx_draw_triangle_2d(152.0f, 272.0f, 200.0f, 272.0f, 176.0f, 296.0f, triangle.packed);
 
         /* the titles of the events, with new / medal marks */
@@ -301,13 +308,20 @@ void menu_draw_event_descriptions(int skip_list)
                     state = 0;
                 }
                 scale = 0.6f;
-                if (row != g_career_row)
+                if (row != g_career_row || CUSTOM_SELECTED)
                     scale = 0.58f;
                 if (event_type == EVENT_TRAINING)
                     scale = 0.52f;
                 if (state != 2)
                     continue;
-                ui_rt2d_text_draw(career_row_title_string_id(row), 64.0f, row_y, dark.packed, scale, 0);
+                ui_rt2d_text_draw(career_row_title_string_id(row == g_career_row ? MFL_CUSTOM_TRACK_HOST_TITLE : row), 64.0f, row_y, dark.packed, scale, 0);
+                if (row == visible - 2 && CUSTOM_LISTED) {      /* below the last shown row: Crazy Town */
+                    float custom_y = row_y + EVENT_ROW_HEIGHT_F;
+
+                    dark.b[3] = (unsigned char)(row_edge_fade((int)custom_y) * fade / 256);
+                    ui_rt2d_text_draw(MFL_CUSTOM_TRACK_TEXT, 64.0f, custom_y, dark.packed, CUSTOM_SELECTED ? 0.6f : 0.58f, 0);
+                    dark.b[3] = alpha_row;
+                }
                 event_type = g_event_type;
                 kind = event_type;
                 if (event_type == EVENT_CUP_4 || event_type == EVENT_CUP_5)

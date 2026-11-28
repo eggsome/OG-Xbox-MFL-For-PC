@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*00416230*/ extern int trail_particles_destroy();
 /*00485240*/ extern RwBool RwTexDictionaryDestroy_004d5ac0(struct RwTexDictionary *p0);
 /*00485960*/ extern int particles_destroy_all();
@@ -39,6 +40,7 @@ void effects_init(void)
   RwTexDictionaryDestroy_004d5ac0(g_load_652dd8);
   RwTexDictionaryDestroy_004d5ac0(g_effects_652ddc);
   RwTexDictionaryDestroy_004d5ac0(g_effects_652de0);
+  mfl_custom_track_pictures_free();
   RwTexDictionaryDestroy_004d5ac0(g_effects_652de4);
   return;
 }

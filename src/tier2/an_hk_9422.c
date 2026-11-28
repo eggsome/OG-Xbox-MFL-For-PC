@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*0042fc00*/ extern void menu_selection_step(int step);
 /*00434be0*/ extern void event_type_from_menu_choice(void);
 /*00435fc0*/ extern int __cdecl career_event_set_progress(int row);
@@ -13,7 +14,28 @@
 /* menu_career_row_next */
 /* "menu_selection_step(1) and advances g_career_row/column with wrap and event type update" */
 /* TIER2: unvalidated 2026-11-10 authority=diffemu */
+static void career_row_next_original(void);
+
+/* The list's cursor one row down.  With the Crazy Town row (mfl_custom_track.c): from the last row the game lets the cursor reach, the
+   cursor goes on to that row (g_career_row stays), and stops there. */
 void menu_career_row_next(void)
+{
+  int row = g_career_row;
+  int column = g_menu_event_column;
+  int on_list = g_menu_records[g_menu_current].page_id >= 6 && g_menu_records[g_menu_current].page_id <= 7;
+
+  if (on_list && mfl_custom_track_selected()) {
+    g_menu_69d6b0 = 0;
+    return;
+  }
+  career_row_next_original();
+  if (on_list && mfl_custom_track_listed() && g_career_row == row && g_menu_event_column == column) {
+    mfl_custom_track_select(1);
+    g_menu_69d6b0 = 1;
+  }
+}
+
+static void career_row_next_original(void)
 {
   int type;
   int rows;

@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*00401000*/ extern int load_cup_model();
 /*0040d0d0*/ extern int __cdecl find_texture_dict_b(RwChar *p0);
 /*00416200*/ extern int trail_particles_create();
@@ -73,6 +74,7 @@ void race_load_common_assets(void)
   fx_spritecomp_create();
   /* done with sfx.piz */
   game_close_piz();
+  mfl_custom_track_pictures_load();      /* the Crazy Town pictures, from its own archive */
 
   /* fx.txd failed to load: report it and stop */
   if (g_load_652dd8 == 0) {

@@ -1,4 +1,6 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
+/*0042fa80*/ extern char * course_content_path_build();
 /*00426ff0*/ extern int ai_file_name();
 /*004a43d0*/ extern undefined __cdecl game_open_piz(char *p0);
 /*004a4440*/ extern int game_close_piz();
@@ -27,6 +29,15 @@ ai_load(void)
   
   uVar2 = 0;
   ai_file_name();
+  if (mfl_custom_track_selected()) {      /* Crazy Town: the routes are in its own archive, not under the base course's id in ai.piz */
+    char *name = (char *)&g_ai_file_name;
+    const char *routes = MFL_CUSTOM_TRACK_ROUTES;
+
+    while ((*name++ = *routes++) != '\0') {
+    }
+    game_open_piz(course_content_path_build(MFL_CUSTOM_TRACK_ARCHIVE));
+  }
+  else
   game_open_piz("d:\\ToastArt\\Common\\ai.piz");
   stream = RwStreamOpen(rwSTREAMFILENAME,rwSTREAMREAD,&g_ai_file_name);
   if (stream != (RwStream *)0x0) {

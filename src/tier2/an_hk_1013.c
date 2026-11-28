@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*00434100*/ extern char *__cdecl menu_icon_texture_lookup(undefined4 p0);
 /*0043cda0*/ extern int menu_texture_dict_load();
 /*004824a0*/ extern int draw_rect();
@@ -298,6 +299,7 @@ check_slot_icon:
     slot = slot + 1;
     if (3 < slot) {
       g_menu_layout_8c86c0 = g_menu_layout_8c86c0 + 0x20;
+      mfl_custom_track_no_mirror();      /* Crazy Town is never mirrored, whatever the host row's icons say */
       return;
     }
   } while( true );

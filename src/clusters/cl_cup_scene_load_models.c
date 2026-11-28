@@ -1,6 +1,7 @@
 // cluster-entries: cup_scene_load_models
 /* Installed cluster cup_scene_load_models (tools/cluster_install.py from output/cluster_pilot_zx/cup_scene_load_models.c); entries are patched at their original addresses by build_overlay.py --clusters. */
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /* DECLS-BEGIN */
 /* DECLS-END */
 /*00401f80*/ extern int __cdecl load_map_model(undefined4 p0);
@@ -69,6 +70,31 @@ void cup_scene_load_models(void)
     entry = entry + CUP_SCENE_ENTRY_DWORDS;
   } while (byte_offset < CUP_SCENE_TABLE_BYTES);
   return;
+}
+
+/*004a43d0*/ extern undefined __cdecl game_open_piz(char *p0);
+/*004a4440*/ extern int game_close_piz();
+/*0042fa80*/ extern char * course_content_path_build();
+/*004c3bf0*/ extern int FUN_004c3bf0(void *p0, undefined4 p1, undefined4 p2);
+int mfl_custom_track_outline_entry[CUP_SCENE_ENTRY_DWORDS];
+
+/* The outline of the Crazy Town track (mfl_custom_track.c): one more entry, built as the loop above builds the game's own, from
+   OUTLINE.DFF of the track's archive. */
+void mfl_custom_track_outline_load(void)
+{
+  int *entry = mfl_custom_track_outline_entry;
+  int k;
+
+  if (!mfl_custom_track_archive_present()) return;
+  game_open_piz(course_content_path_build(MFL_CUSTOM_TRACK_ARCHIVE));
+  entry[CUP_ENTRY_MODEL_ID_INDEX] = -1;
+  entry[0] = FUN_004c3bf0("OUTLINE.DFF", 0, 0);
+  if (entry[0] != 0) {
+    cup_scene_compute_bounds_r(entry);
+    for (k = 0; k < CUP_CLUMP_A_COUNT; k++) entry[CUP_ENTRY_CLUMP_A_INDEX + k] = clump_from_geometry_a();
+    for (k = 0; k < CUP_CLUMP_B_COUNT; k++) entry[CUP_ENTRY_CLUMP_B_INDEX + k] = clump_from_geometry_b();
+  }
+  game_close_piz();
 }
 
 /* cup_scene_compute_bounds_r: C -> original cup_scene_compute_bounds (registers esi) */

@@ -12,6 +12,9 @@
 /* Return the DAT string table entry at index; each table slot holds an offset from the table base. */
 undefined * dat_get_string(int index)
 {
+  if (index == MFL_CUSTOM_TRACK_TEXT) {      /* the name of the Crazy Town track (mfl_custom_track.c) */
+    return (undefined *)mfl_custom_track_text(index);
+  }
 #if MFL_FIX_PREFS
   if (index >= MFL_TEXT_FIRST) {      /* the texts of the Preferences page (mfl_settings_menu.c) */
     return (undefined *)mfl_prefs_text(index);

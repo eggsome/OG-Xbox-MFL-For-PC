@@ -1,6 +1,7 @@
 // cluster-entries: sound_load_course_audio
 /* Installed cluster sound_load_course_audio (tools/cluster_install.py from output/cluster_pilot_uc3/sound_load_course_audio.c); entries are patched at their original addresses by build_overlay.py --clusters. */
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /* compile: /GS */
 /* DECLS-BEGIN */
 /*007d2128*/ extern struct RwGlobalsRelease *RwEngineInstance;
@@ -55,8 +56,10 @@ void sound_load_course_audio(int course_id)
   FID_conflict__wprintf("loading course\n");
   sprintf(path, "toastaudio\\pc\\audio\\pcdics\\");
   sprintf(name, "");
+  mfl_custom_track_hold(1);      /* the sound bank of the base course, not of the Crazy Town archive name */
   strcat(name, (char *)course_table_find_entry(course_id));
   strcat(path, (char *)course_table_find_entry(course_id));
+  mfl_custom_track_hold(0);
   g_sound_groups = PTR_s_skid_on_wet_tarmac_006229a0[course_id];
   strcat(path, ".rws");
   FID_conflict__wprintf("loading courseA\n");

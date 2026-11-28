@@ -1652,6 +1652,7 @@ LAB_0044820b:
         }
       }
 LAB_00448214:
+      mfl_custom_track_sync();      /* the race setup follows the Crazy Town row's selection (mfl_custom_track.c) */
 #if MFL_FIX_PREFS
       mfl_prefs_menu_update();      /* the Preferences page (mfl_settings_menu.c): Left / Right change its rows, Escape writes the settings file */
 #endif

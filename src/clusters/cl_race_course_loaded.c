@@ -1,6 +1,7 @@
 // cluster-entries: race_course_loaded
 /* Installed cluster race_course_loaded (tools/cluster_install.py from output/cluster_pilot_md/race_course_loaded.c); entries are patched at their original addresses by build_overlay.py --clusters. */
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 typedef int CourseId;
 typedef struct { char c[8]; } Text8;   /* the 8 byte string "waiting\0" copied as two dwords */
 /*00408900*/ extern int fx_objects_destroy();
@@ -71,6 +72,7 @@ void __cdecl race_course_loaded(int event,int round_index)
   } frame;
   
   /* event+4+round_index*4 -> pointer to the round's course id; event+200 = cached powerup set. Loads (or reloads) the course, logs the load time, then waits on "waiting" until a player presses select/pause. */
+  mfl_custom_track_sync();      /* before the setup's course id is read */
   lookup_result = course_get_split_sector_8();
   start_ticks = timer_ticks();
   sound_flag_617af0_clear();

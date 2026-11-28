@@ -33,6 +33,7 @@ void gamesave_gather(void)
 #if MFL_FIX_UNLOCK_ALL || MFL_FIX_PREFS
   mfl_unlock_all_unforce(g_savegame_state);
 #endif
+  mfl_custom_track_save_gather(g_savegame_state);      /* the host row's own results in the block, Crazy Town's in the file's extra section */
   if (g_replay_buffer != 0) {
     *(DwReplay *)g_savegame_replay = *(DwReplay *)g_replay_buffer;
   }

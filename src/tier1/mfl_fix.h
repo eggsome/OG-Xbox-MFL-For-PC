@@ -143,6 +143,10 @@ struct mfl_pad_raw {      /* one pad's stick and D-pad of this frame, in XInput'
 };
 extern struct mfl_pad_raw mfl_pad_raw[4];      /* cl_joypad_device_setup.c */
 
+
+struct PlayerInput;
+void mfl_rumble_poll(struct PlayerInput *now, const struct PlayerInput *previous, int gamepad, unsigned int joystick);      /* controller_poll_player, after its clear */
+
 #ifndef MFL_FIX_ALT_TAB     /* the window counts as active again when it is activated by a click or while minimised (WM_ACTIVATE low word), so after
                                 Alt+Tab / the Windows key back into the game it runs and reads keys again; the original compared the whole wparam with
                                 WA_ACTIVE and stayed paused (clusters/cl_window_create_cb_4a9830.c; agents/gfx_w17/notes.md) */

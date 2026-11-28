@@ -139,6 +139,7 @@ void controller_poll_player_n(int player)
     cur_in->down = 0;
     cur_in = (PlayerInput *)&cur_in->accelerate;
   }
+  mfl_rumble_poll(&g_player_inputs[player], &g_player_inputs_previous[player], g_controller_cfg[player].device == 1, g_controller_cfg[player].joystick);
   frame.axis_x = 0.0;
   frame.axis_y = 0.0;
   frame.axis_aux = 0;

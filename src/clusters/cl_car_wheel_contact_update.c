@@ -32,6 +32,7 @@ typedef struct SphereQuery { float x, y, z, radius; int pad[2]; int type; } Sphe
    wheels' contact_distance / in_contact / contact_normal, then moves the car matrix (the previous one of the double buffer) by the mean penetration of the
    wheels in contact (when all four touch, the worst one is dropped), aligns the car to the surface normal (angle capped at 2.5 degrees when `limit_angle`)
    and applies the bounce / reset surface effects to the velocity; finally counts the wheels in contact into car->wheels_in_contact. */
+#define ALIGN_COSINE 0.9999f      /* the Xbox version's: the car turns towards the ground normal from 0.8 degrees on */
 static void triangle_normal_r(float * p0, float * p1, float * p2, float * p3);
 extern void triangle_normal(void);
 void car_wheel_contact_update_n(void *world, Car *car, int limit_angle)
@@ -277,7 +278,7 @@ void car_wheel_contact_update_n(void *world, Car *car, int limit_angle)
   cross.y = normal.x * car->up[2] - normal.z * car->up[0];
   cross.z = normal.y * car->up[0] - normal.x * car->up[1];
   cosine = normal.z * car->up[2] + normal.y * car->up[1] + normal.x * car->up[0];
-  if ((cross.x != 0.0f || cross.y != 0.0f || cross.z != 0.0f) && (cosine < 0.999f || wheels_before < 3)) {
+  if ((cross.x != 0.0f || cross.y != 0.0f || cross.z != 0.0f) && (cosine < ALIGN_COSINE || wheels_before < 3)) {
     cosine_clamped = -1.0;
     if (!(cosine < -1.0)) {
       cosine_clamped = cosine;

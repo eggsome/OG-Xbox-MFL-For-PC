@@ -1,6 +1,7 @@
 // cluster-entries: joypad_device_setup
 /* Installed cluster joypad_device_setup (tools/cluster_install.py from output/cluster_pilot_h3/joypad_device_setup.c); entries are patched at their original addresses by build_overlay.py --clusters. */
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*004c6600*/ extern void bitset_clear_first_n(void *p0, int p1);      /* bzero-like: (buffer, byte count) */
 /*005dd330*/ extern float float_1_0;
 /*005e64a4*/ extern float k_f_0;
@@ -32,6 +33,97 @@ struct JoyState {
   uint pov[4];
   char buttons[32];
 };
+
+#define JOYPAD_SLOT_STRIDE 0x112      /* size of one joypad slot in g_dinput_76ed20, in undefined4 units */
+#define TRIGGER_DEAD_ZONE 30          /* as the Xbox version's pad read: a trigger amount of 30 or less (of 255) is 0, a larger one is taken as it is */
+#define DIPROP_GUIDANDPATH ((const void *)12)
+/*0076ed20*/ extern undefined4 g_dinput_76ed20;
+extern __declspec(dllimport) void *__stdcall LoadLibraryA(const char *name);
+extern __declspec(dllimport) void *__stdcall GetProcAddress(void *module, const char *name);
+typedef int (__stdcall *DiDeviceGetProperty)(int *self, const void *property, void *header);
+typedef unsigned int (__stdcall *XInputGetStateFn)(unsigned int user, void *state);
+unsigned char mfl_pad_triggers[4][2];
+
+/* DirectInput DIPROPGUIDANDPATH (0x228 bytes): the device's interface path */
+struct GuidAndPath {
+  unsigned int size;
+  unsigned int header_size;
+  unsigned int object;
+  unsigned int how;
+  unsigned char guid_class[16];
+  unsigned short path[260];
+};
+
+/* XInput XINPUT_STATE (0x10 bytes) */
+struct XInputState {
+  unsigned int packet;
+  unsigned short buttons;
+  unsigned char left_trigger;
+  unsigned char right_trigger;
+  short sticks[4];
+};
+
+/* 1 when the DirectInput device is an XInput pad: its interface path has "IG_" in it (the test Microsoft documents) */
+static int pad_is_xinput(int *dev)
+{
+  struct GuidAndPath prop;
+  int i;
+
+  prop.size = sizeof(prop);
+  prop.header_size = 16;
+  prop.object = 0;
+  prop.how = 0;      /* DIPH_DEVICE */
+  if (((DiDeviceGetProperty)*(int *)(*dev + 0x14))(dev, DIPROP_GUIDANDPATH, &prop) < 0) {      /* GetProperty */
+    return 0;
+  }
+  for (i = 0; i < 257 && prop.path[i] != 0; i++) {
+    if ((prop.path[i] | 0x20) == 'i' && (prop.path[i + 1] | 0x20) == 'g' && prop.path[i + 2] == '_') {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/* DirectInput shows the two triggers of an XInput pad as one axis, so they are read through XInput (xinput9_1_0.dll, loaded on the first poll;
+   without it nothing changes).  Stores the amounts 0..255 of pad's accelerate (right trigger) and brake (left trigger), as the Xbox version
+   takes them.  The n-th DirectInput pad that is an XInput pad is taken to be XInput user n: the two lists have no common key. */
+static void pad_triggers_read(undefined4 *pad)
+{
+  static XInputGetStateFn get_state;
+  static int dll_tried;
+  static signed char xinput_user[4];      /* per pad: 0 = not looked at yet, -1 = not an XInput pad, else its XInput user + 1 */
+  struct XInputState state;
+  void *dll;
+  int index;
+  int user;
+  int i;
+
+  index = (int)(pad - &g_dinput_76ed20) / JOYPAD_SLOT_STRIDE;
+  if (index >= 4) return;      /* the per-pad tables hold 4 pads (MFL_FIX_PAD_LIMIT) */
+  if (!dll_tried) {
+    dll_tried = 1;
+    dll = LoadLibraryA("xinput9_1_0.dll");
+    if (dll != 0) get_state = (XInputGetStateFn)GetProcAddress(dll, "XInputGetState");
+  }
+  if (get_state == 0) return;
+  if (xinput_user[index] == 0) {
+    user = -1;
+    if (pad_is_xinput((int *)*pad)) {
+      user = 1;
+      for (i = 0; i < index; i++) {
+        if (xinput_user[i] > 0) user++;
+      }
+    }
+    xinput_user[index] = (signed char)user;
+  }
+  if (xinput_user[index] < 0) return;
+  if (get_state((unsigned int)(xinput_user[index] - 1), &state) != 0) {      /* not connected */
+    state.left_trigger = 0;
+    state.right_trigger = 0;
+  }
+  mfl_pad_triggers[index][0] = (unsigned char)(state.right_trigger > TRIGGER_DEAD_ZONE ? state.right_trigger : 0);
+  mfl_pad_triggers[index][1] = (unsigned char)(state.left_trigger > TRIGGER_DEAD_ZONE ? state.left_trigger : 0);
+}
 
 void joypad_device_setup_n(undefined4 *pad)
 
@@ -92,6 +184,7 @@ void joypad_device_setup_n(undefined4 *pad)
       ((byte *)pad)[0x408 + (i >> 3)] |= (byte)(1 << (i & 7));
     }
   }
+  pad_triggers_read(pad);
   pf[0xb2] = (float)(js.lX >> 12) * k_f_0_13333334 - float_1_0;
   pf[0xb3] = float_1_0 - (float)(js.lY >> 12) * k_f_0_13333334;
   if ((short)js.pov[0] != -1) {

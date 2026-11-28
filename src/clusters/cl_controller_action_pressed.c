@@ -1,6 +1,7 @@
 // cluster-entries: controller_action_pressed
 /* Installed cluster controller_action_pressed (tools/cluster_install.py from output/cluster_pilot_kb/controller_action_pressed.c); entries are patched at their original addresses by build_overlay.py --clusters. */
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*005e64a4*/ extern float k_f_0;
 /*005dd9ac*/ extern float k_f_255;
 /*005e14fc*/ extern float k_f_n255;
@@ -12,6 +13,7 @@
 
 #define CONTROLLER_DEVICE_GAMEPAD 1
 #define CONTROLLER_DEVICE_KEYBOARD 2
+#define ACTION_BRAKE 1
 #define ACTION_LEFT 9
 #define ACTION_RIGHT 10
 #define ACTION_UP 11
@@ -57,6 +59,10 @@ unsigned char controller_action_pressed(int controller_index, int action)
       }
       break;
     default:
+      /* accelerate (0) and brake (1): without the bound button, the amount of the pad's trigger */
+      if (action <= ACTION_BRAKE && joystick < 4 && (g_app_7711c4[joystick * 4 + (binding >> 3)] & (1 << (binding & 7))) == 0) {
+        return mfl_pad_triggers[joystick][action];
+      }
       return -(uint)((g_app_7711c4[joystick * 4 + (binding >> 3)] & (1 << (binding & 7))) != 0) & 0xff;
     }
   }

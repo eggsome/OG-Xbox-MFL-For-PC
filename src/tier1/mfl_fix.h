@@ -134,6 +134,8 @@ void mfl_controls_menu_input(int player);      /* controller_poll_player, last s
 #define MFL_FIX_PAD_LIMIT 0
 #endif
 
+extern unsigned char mfl_pad_triggers[4][2];      /* cl_joypad_device_setup.c: per pad the amount 0..255 of accelerate [0] and brake [1] from its triggers */
+
 #ifndef MFL_FIX_ALT_TAB     /* the window counts as active again when it is activated by a click or while minimised (WM_ACTIVATE low word), so after
                                 Alt+Tab / the Windows key back into the game it runs and reads keys again; the original compared the whole wparam with
                                 WA_ACTIVE and stayed paused (clusters/cl_window_create_cb_4a9830.c; agents/gfx_w17/notes.md) */

@@ -35,9 +35,36 @@ struct JoyState {
 };
 
 #define JOYPAD_SLOT_STRIDE 0x112      /* size of one joypad slot in g_dinput_76ed20, in undefined4 units */
+/*0076ed20*/ extern undefined4 g_dinput_76ed20;
+
+struct mfl_pad_raw mfl_pad_raw[4];
+
+/* Keeps this frame's stick and D-pad of pad as they are (the game's own values below are 16 steps per axis, cut by the dead zone and averaged
+   over 8 frames).  DirectInput: lX / lY 0..0xffff with y down, the D-pad as the angle of POV 0 in 1/100 degrees (0 = up, clockwise; low word
+   0xffff = centred). */
+static void pad_raw_store(undefined4 *pad, const struct JoyState *js)
+{
+  struct mfl_pad_raw *raw;
+  int index;
+  unsigned int angle;
+
+  index = (int)(pad - &g_dinput_76ed20) / JOYPAD_SLOT_STRIDE;
+  if (index >= 4) return;      /* the per-pad tables hold 4 pads (MFL_FIX_PAD_LIMIT) */
+  raw = &mfl_pad_raw[index];
+  raw->x = (short)(js->lX - 0x8000);
+  raw->y = (short)(0x7fff - js->lY);
+  raw->dpad = 0;
+  angle = js->pov[0];
+  if ((angle & 0xffff) != 0xffff) {
+    if (angle >= 29250 || angle <= 6750) raw->dpad |= 1;
+    if (angle >= 11250 && angle <= 24750) raw->dpad |= 2;
+    if (angle >= 20250 && angle <= 33750) raw->dpad |= 4;
+    if (angle >= 2250 && angle <= 15750) raw->dpad |= 8;
+  }
+}
+
 #define TRIGGER_DEAD_ZONE 30          /* as the Xbox version's pad read: a trigger amount of 30 or less (of 255) is 0, a larger one is taken as it is */
 #define DIPROP_GUIDANDPATH ((const void *)12)
-/*0076ed20*/ extern undefined4 g_dinput_76ed20;
 extern __declspec(dllimport) void *__stdcall LoadLibraryA(const char *name);
 extern __declspec(dllimport) void *__stdcall GetProcAddress(void *module, const char *name);
 typedef int (__stdcall *DiDeviceGetProperty)(int *self, const void *property, void *header);
@@ -185,6 +212,7 @@ void joypad_device_setup_n(undefined4 *pad)
     }
   }
   pad_triggers_read(pad);
+  pad_raw_store(pad, &js);
   pf[0xb2] = (float)(js.lX >> 12) * k_f_0_13333334 - float_1_0;
   pf[0xb3] = float_1_0 - (float)(js.lY >> 12) * k_f_0_13333334;
   if ((short)js.pov[0] != -1) {

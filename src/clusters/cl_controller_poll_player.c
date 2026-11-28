@@ -19,6 +19,78 @@ extern StickState g_controller_poll_8c7e28;      /* previous */
 extern unsigned char g_controller_poll_8c7e5c;   /* current extra byte */
 extern unsigned char g_controller_poll_8c7e2c;   /* previous extra byte */
 
+#define DPAD_UP 1
+#define DPAD_DOWN 2
+#define DPAD_LEFT 4
+#define DPAD_RIGHT 8
+#define STICK_DEAD_ZONE 0.45f      /* of analog x / y */
+#define STICK_SCALE 1.8181818f     /* 1 / (1 - STICK_DEAD_ZONE) */
+#define DPAD_RAMP 0.05f            /* analog x / y per frame while the D-pad is held */
+
+/* one stick axis (-32768..32767) as the two strengths 0..254 of its directions; 0xff is left to the D-pad */
+static void stick_strengths(int axis, byte *negative, byte *positive)
+{
+  int v;
+
+  v = axis / 128;
+  *negative = 0;
+  *positive = 0;
+  if (v < 0) {
+    v = -1 - v;
+    *negative = (byte)(v == 0xff ? 0xfe : v);
+  } else {
+    *positive = (byte)(v == 0xff ? 0xfe : v);
+  }
+}
+
+/* analog x / y from two strengths: nothing inside the dead zone, the rest stretched to -1..1 */
+static float stick_analog(int negative, int positive)
+{
+  float v;
+
+  v = (float)(positive - negative) * k_f_0_003921569;
+  if (v > STICK_DEAD_ZONE) return (v - STICK_DEAD_ZONE) * STICK_SCALE;
+  if (v < -STICK_DEAD_ZONE) return (v + STICK_DEAD_ZONE) * STICK_SCALE;
+  return 0.0f;
+}
+
+static float clamp_unit(float v)
+{
+  if (v > 1.0f) return 1.0f;
+  if (v < -1.0f) return -1.0f;
+  return v;
+}
+
+/* The directions of a gamepad player as the Xbox version builds them: the strengths from this frame's stick (D-pad: 0xff), analog x / y moved
+   by the D-pad from last frame's value or else taken from the stick, a menu direction from half deflection on. */
+static void pad_directions(struct PlayerInput *pin, const struct PlayerInput *previous, unsigned int joystick)
+{
+  const struct mfl_pad_raw *raw;
+
+  if (joystick >= 4) return;
+  raw = &mfl_pad_raw[joystick];
+  stick_strengths(raw->x, &pin->left, &pin->right);
+  stick_strengths(raw->y, &pin->down, &pin->up);
+  if (raw->dpad & DPAD_LEFT) pin->left = 0xff;
+  if (raw->dpad & DPAD_RIGHT) pin->right = 0xff;
+  if (raw->dpad & DPAD_UP) pin->up = 0xff;
+  if (raw->dpad & DPAD_DOWN) pin->down = 0xff;
+  if (raw->dpad & DPAD_LEFT) pin->analog_x = previous->analog_x - DPAD_RAMP;
+  if (raw->dpad & DPAD_RIGHT) pin->analog_x = previous->analog_x + DPAD_RAMP;
+  if (raw->dpad & DPAD_UP) pin->analog_y = previous->analog_y - DPAD_RAMP;
+  if (raw->dpad & DPAD_DOWN) pin->analog_y = previous->analog_y + DPAD_RAMP;
+  if (pin->analog_x == 0.0f && pin->analog_y == 0.0f) {
+    pin->analog_x = stick_analog(pin->left, pin->right);
+    pin->analog_y = stick_analog(pin->up, pin->down);
+  }
+  pin->analog_x = clamp_unit(pin->analog_x);
+  pin->analog_y = clamp_unit(pin->analog_y);
+  if (pin->left >= 0x80) pin->direction_flags[0] = 0xff;
+  if (pin->right >= 0x80) pin->direction_flags[1] = 0xff;
+  if (pin->up >= 0x80) pin->direction_flags[2] = 0xff;
+  if (pin->down >= 0x80) pin->direction_flags[3] = 0xff;
+}
+
 /* controller_poll_player */
 
 /* builds the per-player input state from the bindings */
@@ -93,6 +165,10 @@ void controller_poll_player_n(int player)
   pressed = controller_action_pressed(player,8);
   pin->insult = pressed;
   pin->fire_copy = pin->fire;
+  if (frame.cfg_or_tmp->device == 1) {
+    pad_directions(pin, &g_player_inputs_previous[player], frame.cfg_or_tmp->joystick);
+    goto LAB_004a5867;
+  }
   pressed = controller_action_pressed(player,9);
   if (pressed != 0) {
     pin->direction_flags[0] = 0xff;

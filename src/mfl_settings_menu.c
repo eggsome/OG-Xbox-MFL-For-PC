@@ -855,6 +855,11 @@ static void ctl_step(int key, int dir)
   controller_cfg_save_n(ctl_player);
 }
 
+#define PAD_HALF 0x4000      /* of mfl_pad_raw's x / y */
+#define PAD_DPAD_UP 1        /* mfl_pad_raw's dpad bits */
+#define PAD_DPAD_DOWN 2
+#define PAD_DPAD_LEFT 4
+#define PAD_DPAD_RIGHT 8
 /* controller_poll_player, last step, while a Preferences page is on screen: the menu fields of the player's input also follow the
  * keyboard's default keys (arrows, Return, Escape) and every found pad's stick and default buttons, whatever device and keys the
  * players have.  The menus read only the players' own bindings, so the Device row could leave no player on the device in the user's
@@ -875,6 +880,16 @@ void mfl_controls_menu_input(int player)
     slot_set(player, device < 0 ? DEVICE_KEYBOARD : DEVICE_PAD, device);
     now[0] |= controller_action_pressed(player, 4);
     now[1] |= controller_action_pressed(player, 5);
+    /* a pad's directions as in its own player's menus: this frame's stick from half deflection on, or the D-pad */
+    if (device >= 0) {
+      const struct mfl_pad_raw *raw = &mfl_pad_raw[device];
+
+      if (raw->x <= -PAD_HALF || (raw->dpad & PAD_DPAD_LEFT) != 0) now[2] = 0xff;
+      if (raw->x >= PAD_HALF || (raw->dpad & PAD_DPAD_RIGHT) != 0) now[3] = 0xff;
+      if (raw->y >= PAD_HALF || (raw->dpad & PAD_DPAD_UP) != 0) now[4] = 0xff;
+      if (raw->y <= -PAD_HALF || (raw->dpad & PAD_DPAD_DOWN) != 0) now[5] = 0xff;
+      continue;
+    }
     for (d = 0; d < 4; d++) if (controller_action_pressed(player, ACTION_LEFT + d) != 0) now[2 + d] = 0xff;
   }
   g_controller_cfg[player] = saved;

@@ -1,4 +1,5 @@
 #include "mfl_tier2.h"
+#include "mfl_fix.h"
 /*0069cf90*/ extern undefined4 g_menu_powerup_set;
 /*0069cfac*/ extern undefined4 g_menu_bot_skill_b;
 /*0069cfb0*/ extern undefined4 g_menu_event_course_index;
@@ -40,7 +41,7 @@ void menu_options_defaults_reset(void)
   int team_step_result;
 
   g_menu_powerup_set = 1;
-  g_menu_bot_skill_b = 1;
+  g_menu_bot_skill_b = 4;      /* Elite */
   g_menu_event_course_index = 0;
   g_menu_player_team_choice = 1;
   g_menu_player_team_choice_1 = 2;

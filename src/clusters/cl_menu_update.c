@@ -229,6 +229,7 @@ extern void __cdecl movie_poll_and_set_surface_b(int a);
 #define MENU_ITEM_OPEN_BONUS 0xff820000 /* page BONUS_FEATURES or BONUS_CAMERAS */
 #define MENU_ITEM_OPEN_AUTOSAVE 0xff830000 /* page AUTOSAVE */
 #define MENU_ITEM_LOAD_COURSE 0xff840000 /* race_load_course_0042fad0 */
+#define ABILITY_DEFAULT 0 /* the column each player starts in on the Ability Select page: 0 Elite, 1 Pro (the original), 2 Amateur, 3 Rookie */
 #define MENU_ITEM_OPEN_TRANSMISSION_INTERRUPTED_A 0xff480000 /* page TRANSMISSION_INTERRUPTED_A (0x14, title text 72) */
 
 /* Frontend menu state machine (0x4463e0): applies the gamma slider value when it changed, decays the select flash, then per frontend state 1..5 the fade in/out of the page, and in state 3 the input handling: the
@@ -1055,7 +1056,7 @@ LAB_004478ac:
                       if (team_mode == 0x1000) {
                         team_mode = 0;
                         do {
-                          *(undefined4 *)((int)&g_menu_controller_vehicle + team_mode) = 1;
+                          *(undefined4 *)((int)&g_menu_controller_vehicle + team_mode) = ABILITY_DEFAULT;
                           *(undefined4 *)((int)&g_ui_69cb10 + team_mode) = 0;
                           team_mode = team_mode + 0xc;
                         } while (team_mode < 0x90);
@@ -1248,7 +1249,7 @@ LAB_00448159:
                     if (team_mode == 0x1000) {
                       color_ptr = &g_menu_controller_vehicle;
                       do {
-                        *color_ptr = 1;
+                        *color_ptr = ABILITY_DEFAULT;
                         color_ptr = color_ptr + 3;
                       } while ((int)color_ptr < (int)&g_hud_69cab8);
                       team_mode = 0;

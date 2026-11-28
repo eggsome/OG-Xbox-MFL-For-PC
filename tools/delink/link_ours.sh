@@ -108,7 +108,8 @@ if [ -n "$LIB_RW" ]; then
   : ${RW_DLL:=$T/../../output/librw/mflrw.dll}      # pinned build (B8 2026-11-01, sha256 in output/librw/mflrw.dll.sha256); rebuild: GEN=<ghidra> librw-mfl/tools/build_mflrw.sh <dir>, copy the d3d9 mflrw.dll over it deliberately
   [ "$RWG" != "$LIB_RW" ] && [ -n "$RWL" ] && [ -n "$IMPLIBS" ] && [ -f "$RW_DLL" ] || { echo "LIB_RW=librw:<group>[,<group>] needs $T/rw_<group>.txt, IMPLIBS=1 and RW_DLL=<mflrw.dll>"; exit 1; }
   mkdir -p $W/rw; export RW_DLL=$(readlink -f $RW_DLL)
-  cat $RWL | grep -v '^#' | awk 'NF{split($1,a,"="); d=(a[2]!=""?a[2]:a[1]); printf ".text\n.globl _%s\n_%s:\n\tjmp *__imp__%s\n", a[1], a[1], d}' > $W/rw/thunks.s      # "exe_name=dll_export" when they differ
+  RW_OWN="RwV3dNormalize RwV3dLength _rwSqrt _rwInvSqrt"      # these four are the exe's own, exact ones (recomp/mfl_exact_math.c): no thunk to the DLL
+  cat $RWL | grep -v '^#' | awk -v own=" $RW_OWN " 'NF{split($1,a,"="); if (index(own, " " a[1] " ")) next; d=(a[2]!=""?a[2]:a[1]); printf ".text\n.globl _%s\n_%s:\n\tjmp *__imp__%s\n", a[1], a[1], d}' > $W/rw/thunks.s      # "exe_name=dll_export" when they differ
   i686-w64-mingw32-as -o $W/rw/thunks.obj $W/rw/thunks.s || exit 1
   { [ -n "${EXTRA_OBJS:-}" ] && cat $EXTRA_OBJS; echo "rw:thunks $W/rw/thunks.obj"; } > $W/rw/extra_objs.txt; EXTRA_OBJS=$W/rw/extra_objs.txt
 else unset RW_DLL; fi
